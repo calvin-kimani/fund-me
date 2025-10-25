@@ -11,28 +11,32 @@ contract FundMe {
     using PriceConverter for uint256;
 
     uint256 public constant MIN_DONATION_AMT = 5 * 1e18;
-    address public immutable i_owner;
+    address public immutable I_OWNER;
     mapping(address donator => uint256 amount) public donations;
 
     constructor() {
-        i_owner = msg.sender;
+        I_OWNER = msg.sender;
     }
 
-    modifier isOwner(){
-      if(msg.sender != i_owner)
-        revert(ErrNotOwner());
-      _;
+    modifier isOwner() {
+        _isOwner();
+        _;
     }
 
     function fund() public payable {
-      require(msg.value.convertToUsd() >= MIN_DONATION_AMT, "Minimum donation not met");
-      donations[msg.sender] += msg.value;
+        if (msg.value.convertToUsd() < MIN_DONATION_AMT) {
+            revert ErrMinimumDonation();
+        }
+
+        donations[msg.sender] += msg.value;
     }
 
     function withdraw() public isOwner {
-      (bool success,) = payable(i_owner).call{value: address(this).balance}("");
-      if(!success){
-        revert(ErrWithdrawFail());
-      }
+        (bool success,) = payable(I_OWNER).call{value: address(this).balance}("");
+        if (!success) revert ErrWithdrawFail();
+    }
+
+    function _isOwner() internal view {
+        if (msg.sender != I_OWNER) revert ErrNotOwner();
     }
 }
