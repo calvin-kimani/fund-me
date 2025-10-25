@@ -45,4 +45,12 @@ contract FundMe {
     function getVersion() public view returns (uint256) {
         return PriceConverter.version(priceFeed);
     }
+
+    receive() external payable {
+        fund();
+    }
+
+    fallback() external payable {
+        fund();
+    }
 }
