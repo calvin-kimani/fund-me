@@ -12,10 +12,12 @@ contract FundMe {
 
     uint256 public constant MIN_DONATION_AMT = 5 * 1e18;
     address public immutable I_OWNER;
+    address private priceFeed;
     mapping(address donator => uint256 amount) public donations;
 
-    constructor() {
+    constructor(address _priceFeed) {
         I_OWNER = msg.sender;
+        priceFeed = _priceFeed;
     }
 
     modifier isOwner() {
@@ -24,7 +26,7 @@ contract FundMe {
     }
 
     function fund() public payable {
-        if (msg.value.convertToUsd() < MIN_DONATION_AMT) {
+        if (msg.value.convertToUsd(priceFeed) < MIN_DONATION_AMT) {
             revert ErrMinimumDonation();
         }
 
@@ -38,5 +40,9 @@ contract FundMe {
 
     function _isOwner() internal view {
         if (msg.sender != I_OWNER) revert ErrNotOwner();
+    }
+
+    function getVersion() public view returns (uint256) {
+        return PriceConverter.version(priceFeed);
     }
 }
